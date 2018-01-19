@@ -2,3 +2,13 @@
 Embedded systems exercises - UAM 51000
 
 Prácticas para la clase de Sistemas Embebidos, Universidad Anáhuac Mayab NRC 51000
+
+Equipo #1
+
+Alfredo Medina
+
+Rita Torres
+
+Diego Ceballos
+
+Esteban Baeza
