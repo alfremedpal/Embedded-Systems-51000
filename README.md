@@ -5,6 +5,9 @@ Prácticas para la clase de Sistemas Embebidos, Universidad Anáhuac Mayab NRC 5
 
 Equipo #1
 Alfredo Medina
+
 Rita Torres
+
 Diego Ceballos
+
 Esteban Baeza
