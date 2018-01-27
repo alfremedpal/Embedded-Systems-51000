@@ -1,2 +1,3 @@
 # wait_ms() function
-R
+Recieves the amount of miliseconds to wait
+NOTE: If using a 4MHz crystal PLLDIV must be 1
