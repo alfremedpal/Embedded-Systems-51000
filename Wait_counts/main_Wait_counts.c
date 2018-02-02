@@ -16,8 +16,8 @@ void main(void) {
     while(1)
     {
         LED = _ON;
-        wait_counts(30, 0);
+        wait_counts(300, 0);
         LED = _OFF;
-        wait_counts(30, 0);
+        wait_counts(300, 0);
     }
 }

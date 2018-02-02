@@ -1,41 +1,29 @@
 #include "config.h"
 
-void wait_5seg() // Pre-scaler needs to be 1:256
+void wait_counts(unsigned int n, unsigned char edge) 
 {
-    unsigned int count = 0;
-    TMR0L = 131;
+    TMR0L = 0;
     T0IF = 0;
+    T0SE = edge;
     TMR0ON = 1;
-    while(count < 1875)
+    
+    unsigned int overflow = 0;
+    
+    while(1)
     {
-        while(T0IF == 0);
-        count++;
-        T0IF = 0;
-        TMR0L = 131;
-    }
-    TMR0ON = 0;
-}
-
-void wait_ms(unsigned int ms) // Pre-scaler needs to be 1:4 
-{
-    unsigned int countF = 0;
-    while(countF < ms)
-    {
-        unsigned int count = 0;
-        TMR0L = 131;
-        T0IF = 0;
-        TMR0ON = 1;
-        while(count < 24)
-        {
-            while(T0IF == 0);
-            count++;
-            T0IF = 0;
-            TMR0L = 131;
-        }
-        TMR0ON = 0;
-        countF++;
+        if(TMR0L + overflow > n)
+            break;
+            
+        if(T0IF == 1)
+            {
+                T0IF = 0;
+                TMR0L  = 0;
+                overflow = overflow + 255;
+            }
     }
     
+    TMR0ON = 0;
+    return;
 }
 
 void configPIC()
@@ -52,10 +40,10 @@ void configPIC()
     INTCONbits.GIE = 0;     //Turn off ALL interrupts
     
     
-    T0CON = 0b01000001;     // TIMER 0
-                            // Timer 0 enabled; configured as 8-bit timer;
-                            // internal clock; increment on low to high;
-                            // pre-scaler is assigned; pre-scaler is 1:4
+    T0CON = 0b01111000;     // TIMER 0
+                            // Timer 0 disabled; configured as 8-bit counter;
+                            // T0CKI pin; increment on low to high;
+                            // pre-scaler is NOT assigned; pre-scaler is 1:2
     
     
      
@@ -68,6 +56,7 @@ void configPIC()
                             
    
     LED_TRIS = OUTPUT;
+    SW1_TRIS = INPUT;
    
     
     //CONFIGURATION BITS
