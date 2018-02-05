@@ -2,7 +2,7 @@
 
 - [x] Turn on an LED with INT0
 - [x] Toggle the state of an LED with INT1
-- [] Turn on an LED with INT2 only if at least 10 seconds have passed
+- [ ] Turn on an LED with INT2 only if at least 10 seconds have passed
 
 ## TODO
 
