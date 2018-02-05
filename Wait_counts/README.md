@@ -1,4 +1,7 @@
-# TODO:
+# wait_counts():
 
-- Edit this README file
-- Test the function with the function generator at the lab
+Recieves the number of counts 'n' to wait before continuing with the code.
+
+## NOTE:
+
+The counter is set up as 8-bits, thus the +256 compensation in config.c
