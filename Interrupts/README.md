@@ -1,8 +1,16 @@
 # Interrupts practice
 
-- Turn on an LED with INT0
-- Toggle the state of an LED with INT1
-- Turn on an LED with INT2 only if at least 10 seconds have passed
+- [x] Turn on an LED with INT0
+- [x] Toggle the state of an LED with INT1
+- [] Turn on an LED with INT2 only if at least 10 seconds have passed
+
+## TODO
+
+- Finish c)
+- Format code
+- Add one more LED
+- Upload final files when completed
+
 
 Configuration bits needed (also available inside the 'configPic' function in config.c):
 ```
