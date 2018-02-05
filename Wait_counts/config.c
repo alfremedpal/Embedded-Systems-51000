@@ -18,7 +18,7 @@ void wait_counts(unsigned int n, unsigned char edge)
             {
                 T0IF = 0;
                 TMR0L  = 0;
-                overflow = overflow + 255;
+                overflow = overflow + 256;
             }
     }
     
