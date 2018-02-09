@@ -1,5 +1,27 @@
 #include "config.h"
 
+void wait_ms(unsigned int ms) // Pre-scaler needs to be 1:4 
+{
+    unsigned int countF = 0;
+    while(countF < ms)
+    {
+        unsigned int count = 0;
+        TMR0L = 131;
+        T0IF = 0;
+        TMR0ON = 1;
+        while(count < 24)
+        {
+            while(T0IF == 0);
+            count++;
+            T0IF = 0;
+            TMR0L = 131;
+        }
+        TMR0ON = 0;
+        countF++;
+    }
+    
+}
+
 void configPIC()
 {
     //All analog pins need to be input
@@ -12,10 +34,10 @@ void configPIC()
     TRISE = 0b00000000;     //Set all pins of part E as output
     
     
-    T0CON = 0b01111000;     // TIMER 0
+    T0CON = 0b01010001;     // TIMER 0
                             // Timer 0 disabled; configured as 8-bit counter;
                             // T0CKI pin; increment on low to high;
-                            // pre-scaler is NOT assigned; pre-scaler is 1:2
+                            // pre-scaler is NOT assigned; pre-scaler is 1:4
     
     
      
@@ -45,11 +67,11 @@ void configPIC()
     INTCONbits.INT0IF = 0;      // INT0 flag is off
     INTCON3bits.INT1IE = 1;     // Enables interrupts from INT1
     INTCON3bits.INT1IF = 0;     // INT1 flag is off
-    INTCON3bits.INT2IE = 1;     // Enables interrupts from INT2
+    INTCON3bits.INT2IE = 0;     // Disables interrupts from INT2
     INTCON3bits.INT2IF = 0;     // INT1 flag is off
     
     INTCON2bits.INTEDG0 = 1;    // Low to high for INT0
-    INTCON2bits.INTEDG1 = 0;    // High to low for INT1
+    INTCON2bits.INTEDG1 = 0;   // High to low for INT1
     INTCON2bits.INTEDG2 = 0;    // High to low for INT2
     
 

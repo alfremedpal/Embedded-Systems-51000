@@ -33,6 +33,7 @@ void interrupt isr()
     if(INT2IF)
     {
         INT2IF = 0;
+        LED = _ON;
     }
 }
 
@@ -42,20 +43,14 @@ void main(void) {
     
     LED = _OFF;
     
-    //TRISAbits.RA1 = 0;
-    //PORTAbits.RA1 = 1;
-    
-    //while(1)
-    //{
-        //LED = state;
-    //}
+    //wait_ms(10000);           // Uncomment for a), c)
+    //INTCON3bits.INT2IF = 0;   // Uncomment for a), c)
+    //INTCON3bits.INT2IE = 1;   // Uncomment for a), c)
     
     
-    
-    
-    
-    
-    
-    
+    while(1)
+    {
+        LED = state; // Comment for a), c)
+    }
 }
 
