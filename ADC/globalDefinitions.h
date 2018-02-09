@@ -1,37 +1,29 @@
-/* 
- * File:   globalDefinitions.h
- * Author: Alfredo Medina
- *
- * Created on 8 de febrero de 2018, 05:40 PM
- */
 
 #ifndef GLOBALDEFINITIONS_H
 #define	GLOBALDEFINITIONS_H
 
-//BASIC: For all applications
-//PARTICULR: Unique to this application
+#define SIGNALa PORTAbits.AN0
+#define SIGNALa_TRIS TRISAbits.TRISA0
+#define SIGNALb PORTAbits.AN1
+#define SIGNALb_TRIS TRISAbits.TRISA1
+#define VREFP PORTAbits.RA2
+#define VREFP_TRIS TRISAbits.RA2
+#define VREFN PORTAbits.RA3
+#define VREFN_TRIS TRISAbits.RA3
+#define LEDa PORTAbits.RA4
+#define LEDa_TRIS TRISAbits.RA4
+#define LEDb PORTAbits.RA5
+#define LEDb_TRIS TRISAbits.RA5
 
-//===BASIC===
+#define _XTAL_FREQ 4000000
+
 #define _ON 1
 #define _OFF 0
 
-#define OUTPUT 0
 #define INPUT 1
-//============
+#define OUTPUT 0
 
-//===PARTICULAR===
-#define AN0 PORTAbits.RA0
-#define AN0_TRIS TRISAbits.RA0
-
-#define LED PORTAbits.RA4 
-#define LED_TRIS TRISAbits.RA4
-
-#define INTE0 PORTBbits.RB0
-#define INTE0_TRIS TRISBbits.RB0
-#define INTE1 PORTBbits.RB1
-#define INTE1_TRIS TRISBbits.RB1
-#define INTE2 PORTBbits.RB2
-#define INTE2_TRIS TRISBbits.RB2
+#define SW1_TRIS TRISCbits.RC2
 
 #endif	/* GLOBALDEFINITIONS_H */
 
