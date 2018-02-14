@@ -1,0 +1,375 @@
+#include <xc.h>
+#include <pic18f4550.h>
+#include "globalDefinitions.h"
+#include "LCD_Definitions.h"
+#include "LCD_functions.h"
+#include "config.h"
+#include "Wait_us.h"
+
+void LCD_Init(void) {
+    //1.- Poner en bajo el Port D
+    D0_LAT = _OFF;
+    D1_LAT = _OFF;
+    D2_LAT = _OFF;
+    D3_LAT = _OFF;
+    D4_LAT = _OFF;
+    D5_LAT = _OFF;
+    D6_LAT = _OFF;
+    D7_LAT = _OFF;
+    
+    //2.- Configurar Port D como salida
+    D0_TRIS = _OUTPUT;
+    D1_TRIS = _OUTPUT;
+    D2_TRIS = _OUTPUT;
+    D3_TRIS = _OUTPUT;
+    D4_TRIS = _OUTPUT;
+    D5_TRIS = _OUTPUT;
+    D6_TRIS = _OUTPUT;
+    D7_TRIS = _OUTPUT;
+    
+    //3.- Poner en bajo las señales de control RS, RW y EN
+    RS_LAT = _OFF;
+    RW_LAT = _OFF;
+    EN_LAT = _OFF;
+    
+    RS_TRIS = _OUTPUT;
+    RW_TRIS = _OUTPUT;
+    EN_TRIS = _OUTPUT;
+    
+    //4.- Esperar al menos 15 ms para que se energize el LCD
+    Wait_ms(16);
+    
+    //5.- Configurar: 8-bit, 1-line, 5x8
+    function_set(1,0,0);
+    
+    //6.- Esperar 5 us
+    Wait_us(6);
+    
+    //7.- Configurar: 8-bit, 1-line, 5x8
+    function_set(1,0,0);
+    
+    //8.- Esperar 2 us
+    Wait_us(2);
+    
+    //9.- Configurar: 8-bit, 1-line, 5x8
+    function_set(1,0,0);
+    
+    //10.- Esperar hasta que el LCD se desocupe
+    wait_while_busyLCD();
+    
+    //11.- Configurar: 8-bit, 2-line, 5x8
+    function_set(1,1,0);
+    
+    //12.- Esperar hasta que el LCD se desocupe
+    wait_while_busyLCD();
+    
+    //13.- Configurar: display, cursor y parpadeo desactivado
+    display_control(0,0,0);
+    
+    //14.- Esperar hasta que el LCD se desocupe
+    wait_while_busyLCD();
+    
+    //15.- Configuar: display, cursor y parpadeo activado
+    display_control(1,1,1);
+    
+    //16.- Esperar hasta que el LCD se desocupe
+    wait_while_busyLCD();
+    
+    //17.- Limpiar pantalla y enviar al cursor al inicio
+    clear_display();
+    wait_while_busyLCD();
+    return_home();
+    wait_while_busyLCD();
+    
+}
+
+void wait_while_busyLCD(void){
+    unsigned int bf; //busy flag
+    bf = 1;
+    
+    while (bf == 1) {
+        //RS in command mode and RW in read mode
+        RW_LAT = read;
+        RS_LAT = command;
+        
+        //Wait 2 us
+        Wait_us(2);
+        
+        //Control signal EN = ON
+        EN_LAT = _ON;
+        
+        //Wait 2 us
+        Wait_us(2);
+        EN_LAT = _OFF;
+        RW_LAT = write;
+        
+        //Check busy flag
+        if (D7_PORT) {
+            bf = 1;
+        }else{
+            bf = 0;
+        }
+    }
+}
+
+void LCD_Command(void) {
+    //(LLEGA EL VALOR DEL COMANDO DESDE OTRA FUNCION)
+    
+    //Port D output config
+    D0_TRIS = _OUTPUT;
+    D1_TRIS = _OUTPUT;
+    D2_TRIS = _OUTPUT;
+    D3_TRIS = _OUTPUT;
+    D4_TRIS = _OUTPUT;
+    D5_TRIS = _OUTPUT;
+    D6_TRIS = _OUTPUT;
+    D7_TRIS = _OUTPUT;
+    
+    //Control signal RS = COMMAND
+    RS_LAT = command;
+    
+    //Control signal RW = WRITE
+    RW_LAT = write;
+    
+    //Wait 2 us
+    Wait_us(2);
+    
+    //Turn on EN
+    EN_LAT = _ON;
+    
+    //Wait 2 us
+    Wait_us(2);
+    
+    //Turn off EN
+    EN_LAT = _OFF;
+    
+    //Wait 2 us
+    Wait_us(2);
+    
+    //Port D input config
+    D0_TRIS = _INPUT;
+    D1_TRIS = _INPUT;
+    D2_TRIS = _INPUT;
+    D3_TRIS = _INPUT;
+    D4_TRIS = _INPUT;
+    D5_TRIS = _INPUT;
+    D6_TRIS = _INPUT;
+    D7_TRIS = _INPUT;
+}
+
+void LCD_Data(void) {
+    //Port D config output
+    D0_TRIS = _OUTPUT;
+    D1_TRIS = _OUTPUT;
+    D2_TRIS = _OUTPUT;
+    D3_TRIS = _OUTPUT;
+    D4_TRIS = _OUTPUT;
+    D5_TRIS = _OUTPUT;
+    D6_TRIS = _OUTPUT;
+    D7_TRIS = _OUTPUT;
+    
+    //Control signal RW = WRITE
+    RW_LAT = write;
+    
+    //Control signal RS = DATA
+    RS_LAT = data;
+    
+    //Wait 2 us
+    Wait_us(2);
+    
+    //Control signal EN = ON
+    EN_LAT = _ON;
+    
+    //Wait 2 us
+    Wait_us(2);
+    
+    //Signal control EN = OFF
+    EN_LAT = _OFF;
+    Wait_us(2);
+    
+    //Signal control RS = COMMAND
+    RS_LAT = command;
+    
+    //Port D input config
+    D0_TRIS = _INPUT;
+    D1_TRIS = _INPUT;
+    D2_TRIS = _INPUT;
+    D3_TRIS = _INPUT;
+    D4_TRIS = _INPUT;
+    D5_TRIS = _INPUT;
+    D6_TRIS = _INPUT;
+    D7_TRIS = _INPUT;
+}
+
+void function_set(int dataLength, int LineNumber, int dots) {
+    D7_LAT = 0;
+    D6_LAT = 0;
+    D5_LAT = 1;
+    D4_LAT = dataLength;
+    D3_LAT = LineNumber;
+    D2_LAT = dots;
+    
+    LCD_Command();
+}
+
+void clear_display(void) {
+    D7_LAT = 0;
+    D6_LAT = 0;
+    D5_LAT = 0;
+    D4_LAT = 0;
+    D3_LAT = 0;
+    D2_LAT = 0;
+    D1_LAT = 0;
+    D0_LAT = 1;
+    LCD_Command();
+}
+
+void return_home(void) {
+    D7_LAT = 0;
+    D6_LAT = 0;
+    D5_LAT = 0;
+    D4_LAT = 0;
+    D3_LAT = 0;
+    D2_LAT = 0;
+    D1_LAT = 1;
+    D0_LAT = 0;
+    LCD_Command();
+}
+
+
+void display_control(int display, int cursor, int blink) {
+    D7_LAT = 0;
+    D6_LAT = 0;
+    D5_LAT = 0;
+    D4_LAT = 0;
+    D3_LAT = 1;
+    D2_LAT = display;
+    D1_LAT = cursor;
+    D0_LAT = blink;
+    
+    LCD_Command();
+}
+
+void print_char_LCD(char character) {
+    LATD = character;
+    LCD_Data();
+    wait_while_busyLCD();
+    Wait_ms(10);
+}
+
+void print_in_LCD(char* str) {
+    int pos = 0;
+    
+    while (str[pos] != 0) {
+        print_char_LCD(str[pos]);
+        Wait_ms(10);
+        pos++;
+        
+        if (pos == 16) {
+            for(int i=0; i<24; i++) {
+                print_char_LCD(" ");
+            }
+        }
+    }
+    Wait_ms(300);
+    return_home();
+    Wait_us(450);
+}
+void cursor_display_shift(int shiftCursor, int shift) {
+    D7_LAT = 0;
+    D6_LAT = 0;
+    D5_LAT = 0;
+    D4_LAT = 1;
+    D3_LAT = shiftCursor;
+    D2_LAT = shift;
+    
+    LCD_Command();
+}
+void move_cursor(unsigned int position) {
+    unsigned int count = 0;
+    
+    while (count < position) {
+        cursor_display_shift(0,1);
+        count++;
+        Wait_us(100);
+    }
+    
+}
+
+#ifndef LCD_FUNCTIONS_H
+#define LCD_FUNCTIONS_H
+
+#include "globalDefinitions.h"
+
+void LCD_Init(void);
+void wait_while_busyLCD(void);
+void LCD_Command(void);
+void LCD_Data(void);
+void function_set(int dataLength, int LineNumber, int dots);
+void clear_display(void);
+void return_home(void); 
+void display_control(int display, int cursor, int blink);
+void print_char_LCD(char character);
+void print_in_LCD(char* str);
+void move_cursor(unsigned int position);
+void cursor_display_shift(int shiftCursor, int shift);
+
+#endif  /* LCD_FUNCTIONS_H */
+
+#ifndef LCD_DEFINITIONS_H
+#define LCD_DEFINITIONS_H
+
+//Control port
+#define RS_PORT PORTBbits.RB2
+#define RW_PORT PORTBbits.RB3
+#define EN_PORT PORTBbits.RB4
+
+#define RS_LAT LATBbits.LB2
+#define RW_LAT LATBbits.LB3
+#define EN_LAT LATBbits.LB4
+
+#define RS_TRIS TRISBbits.RB2
+#define RW_TRIS TRISBbits.RB3
+#define EN_TRIS TRISBbits.RB4
+
+//Data port
+#define D0_PORT PORTDbits.RD0
+#define D1_PORT PORTDbits.RD1
+#define D2_PORT PORTDbits.RD2
+#define D3_PORT PORTDbits.RD3
+#define D4_PORT PORTDbits.RD4
+#define D5_PORT PORTDbits.RD5
+#define D6_PORT PORTDbits.RD6
+#define D7_PORT PORTDbits.RD7
+
+#define D0_LAT LATDbits.LD0
+#define D1_LAT LATDbits.LD1
+#define D2_LAT LATDbits.LD2
+#define D3_LAT LATDbits.LD3
+#define D4_LAT LATDbits.LD4
+#define D5_LAT LATDbits.LD5
+#define D6_LAT LATDbits.LD6
+#define D7_LAT LATDbits.LD7
+
+#define D0_TRIS TRISDbits.RD0
+#define D1_TRIS TRISDbits.RD1
+#define D2_TRIS TRISDbits.RD2
+#define D3_TRIS TRISDbits.RD3
+#define D4_TRIS TRISDbits.RD4
+#define D5_TRIS TRISDbits.RD5
+#define D6_TRIS TRISDbits.RD6
+#define D7_TRIS TRISDbits.RD7
+
+//RW_PORT definitions
+#define write 0
+#define read 1
+
+//RS_PORT definitions
+#define command 0
+#define data 1
+
+//EN_PORT definitions
+#define busy 1
+#define idle 0
+
+#endif  /* LCD_DEFINITIONS_H */
