@@ -46,6 +46,9 @@
 #define START PORTAbits.RA0
 #define START_TRIS TRISAbits.RA0
 
+#define BUZZER PORTCbits.RC2
+#define BUZZER_TRIS TRISCbits.RC2
+
 //===LCD===
 #define RS PORTDbits.RD0
 #define EN PORTDbits.RD1

@@ -19,6 +19,7 @@
 unsigned int credits;
 unsigned int tokens;
 unsigned int level;
+unsigned int seed;
 
 unsigned int green_token;
 unsigned int red_token;
@@ -45,6 +46,7 @@ unsigned int random_number(){
 }
 
 void print_score(){
+    LCD_Clear();
     sprintf(m, "Level: %d", level);
     sprintf(n, "Puntaje: %d", score);
     
@@ -54,46 +56,69 @@ void print_score(){
     LCD_WriteString(n);
 }
 
+void check_buzzer(){
+    if(!LED_GREEN && !LED_RED && !LED_YELLOW && !LED_BLUE){
+        BUZZER = _OFF;
+    }
+}
+
 void interrupt isr(){
     if(INT0IF){
         INT0IF = 0;
-        LED_GREEN = _OFF;
-        /*
-        if(LED_GREEN && green_token && (tokens > 0)){
-            green_token = 0;
+        if((tokens > 0) && green_token){
             tokens--;
-            LED_GREEN = _OFF;
-            score = score + 10;
-        } else if(green_token) {
             green_token = 0;
-            score = score - 10;
+            if(LED_GREEN){
+                LED_GREEN = _OFF;
+                score = score + 10;
+            } else if (!LED_GREEN){
+                score = score -10;
+            }
         }
-        print_score();
-         */
-        TEST = 1;
     }
     
     if(INT1IF){
         INT1IF = 0;
-        LED_RED = _OFF;
-        TEST = 2;
+        if((tokens > 0) && red_token){
+            tokens--;
+            red_token = 0;
+            if(LED_RED){
+                LED_RED = _OFF;
+                score = score + 10;
+            } else if (!LED_RED){
+                score = score -10;
+            }
+        }
     }
     
     if(INT2IF){
         INT2IF = 0;
-        LED_YELLOW = _OFF;
-        TEST = 3;
+        if((tokens > 0) && yellow_token){
+            tokens--;
+            yellow_token = 0;
+            if(LED_YELLOW){
+                LED_YELLOW = _OFF;
+                score = score + 10;
+            } else if (!LED_YELLOW){
+                score = score -10;
+            }
+        }
     }
     
     if(RBIF){
         RBIF = 0;
-        LED_BLUE = _OFF;
-        TEST = 4;
+        if((tokens > 0) && blue_token){
+            tokens--;
+            blue_token = 0;
+            if(LED_BLUE){
+                LED_BLUE = _OFF;
+                score = score + 10;
+            } else if (!LED_BLUE){
+                score = score -10;
+            }
+        }
     }
-    
-    //if(STARTIF){
-        //STARTIF = 0;
-        //start = 1;
+    check_buzzer();
 }
 
 void init_whacamole(){
@@ -152,6 +177,7 @@ void kill_moles(){
     LED_RED = _OFF;
     LED_YELLOW = _OFF;
     LED_BLUE = _OFF;
+    score = score - (tokens * 10);
 }
 
 void spawn_tokens(){
@@ -164,27 +190,24 @@ void spawn_tokens(){
 void start_level(){
     unsigned int R1;
     unsigned int R2;
-    for(int j = 1; 1 != mole_amount; j++){
+    for(int j = 0; j != mole_amount; j++){
         tokens = moles;
         spawn_tokens();
-        //generate random number R;
+        R1 = rand()%4 + 1;
+        R2 = rand()%4 + 1;
+        while(R2 == R1){
+            R2 = rand()%4 +1;
+        }
+        BUZZER = _ON;
         if(moles == 1){
-            R1 = 1;
             mole_on(R1);
-            wait_ms(mole_duration);
-            mole_off(R1);
         }
         if(moles == 2){
-            R1 = 1;
-            R2 = 2;
             mole_on(R1);
             mole_on(R2);
-            wait_ms(mole_duration);
-            mole_off(R1);
-            mole_off(R2);
+            
         }
         if(moles == 3){
-            R1 = 3;
             switch(R1){
                 case 1:
                     mole_on(2);
@@ -208,6 +231,10 @@ void start_level(){
                     break;
             }
         }
+        wait_ms(mole_duration);
+        BUZZER = _OFF;
+        kill_moles();
+        print_score();
     }
 }
 
@@ -253,18 +280,65 @@ void play_level(){
             mole_amount = 10;
             moles = 3;
             break;
-    }    
-    start_level();
+    }
 }
 
 void game_start(){
     for(level = 1; level < 9; level++){
-        play_level(level);
+        play_level();
+        start_level();
     }
 }
 
 void attract(){
-    // quick fancy stuff
+    if(seed < 1000){
+        seed++;
+    } else if (seed == 1000){
+        seed = 0;
+    }
+    if(seed < 250){
+       LED_GREEN = _ON; 
+    } else if ((seed > 250) && (seed < 500)){
+        LED_RED = _ON;
+    } else if ((seed > 500) && (seed < 750)){
+        LED_YELLOW = _ON;
+    } else if (seed > 750){
+        LED_BLUE = _ON;
+    }
+    wait_ms(1);
+    kill_moles();
+}
+
+void prepare(){
+    kill_moles();
+    srand(seed);
+    score = 0;
+    LCD_Clear();
+    LCD_SetCursor(1,0);
+        LCD_WriteString("STARTING IN");
+        LCD_SetCursor(2,0);
+        LCD_WriteString("5");
+        wait_ms(1000);
+        LCD_SetCursor(1,0);
+        LCD_WriteString("STARTING IN");
+        LCD_SetCursor(2,0);
+        LCD_WriteString("4");
+        wait_ms(1000);
+        LCD_SetCursor(1,0);
+        LCD_WriteString("STARTING IN");
+        LCD_SetCursor(2,0);
+        LCD_WriteString("3");
+        wait_ms(1000);
+        LCD_SetCursor(1,0);
+        LCD_WriteString("STARTING IN");
+        LCD_SetCursor(2,0);
+        LCD_WriteString("2");
+        wait_ms(1000);
+        LCD_SetCursor(1,0);
+        LCD_WriteString("STARTING IN");
+        LCD_SetCursor(2,0);
+        LCD_WriteString("1");
+        wait_ms(1000);
 }
 
 void testing(){
@@ -303,11 +377,12 @@ void main(void) {
         }
         attract();
          */
-        LCD_SetCursor(1,0);
-        LCD_WriteString("TESTING");
-        testing();
-        LCD_SetCursor(2,0);
-        LCD_WriteString(m); 
+        while(!START){
+            attract();
+        }
+        prepare();
+        print_score();
+        game_start();
     }
     return;
 }
