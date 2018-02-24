@@ -119,6 +119,7 @@ void interrupt isr(){
         }
     }
     check_buzzer();
+    
 }
 
 void init_whacamole(){
@@ -129,6 +130,7 @@ void init_whacamole(){
     red_token = 0;
     yellow_token = 0;
     blue_token = 0;
+    BUZZER = _OFF;
 }
 
 void mole_on(unsigned int topo){
@@ -195,10 +197,11 @@ void start_level(){
         spawn_tokens();
         R1 = rand()%4 + 1;
         R2 = rand()%4 + 1;
+        BUZZER = _ON;
         while(R2 == R1){
             R2 = rand()%4 +1;
         }
-        BUZZER = _ON;
+        
         if(moles == 1){
             mole_on(R1);
         }
@@ -281,6 +284,9 @@ void play_level(){
             moles = 3;
             break;
     }
+    if(level != 9){
+        wait_ms(1000);
+    }
 }
 
 void game_start(){
@@ -313,6 +319,7 @@ void prepare(){
     kill_moles();
     srand(seed);
     score = 0;
+    level = 1;
     LCD_Clear();
     LCD_SetCursor(1,0);
         LCD_WriteString("STARTING IN");
@@ -361,6 +368,23 @@ void testing(){
     }
 }
 
+void intro(){
+    LCD_Clear();
+    LCD_SetCursor(1,0);
+    LCD_WriteString("PRESS THE");
+    LCD_SetCursor(2,0);
+    LCD_WriteString("START BUTTON");
+}
+
+void game_over(){
+    sprintf(m, "SCORE: %d", score);
+    LCD_Clear();
+    LCD_SetCursor(1,0);
+    LCD_WriteString(m);
+    LCD_SetCursor(2,0);
+    LCD_WriteString("PRESS START");
+}
+
 void main(void) {
     
     configPIC();
@@ -370,19 +394,16 @@ void main(void) {
     kill_moles();
 
     while(1){
-        /*
-        if((credits > 0) && START){
-            credits--;
-            game_start();
-        }
-        attract();
-         */
+        intro();
         while(!START){
             attract();
         }
         prepare();
         print_score();
         game_start();
+        game_over();
+        while(!START);
+        wait_ms(100);
     }
     return;
 }
