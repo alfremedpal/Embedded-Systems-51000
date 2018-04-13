@@ -17,4 +17,5 @@ Prácticas para la clase de Sistemas Embebidos, Universidad Anáhuac Mayab NRC 5
 - Alfredo Medina
 - Diego Ceballos
 - Esteban Baeza
+- Rosalia Torres
 
