@@ -12,11 +12,14 @@
 #include "globalDefinitions.h"
 
 unsigned char ignite;
-unsigned int value[9];
-int qtr;
+
+int qtr[8];
 int qtr_max[8];
 int qtr_min[8];
 int qtr_thresh[8];
+
+int sharp;
+double distance;
 
 void alternate_LED(){
     if (LED){
@@ -47,7 +50,7 @@ void warm_up(){
     OSCCON = 0x72;      // Oscillator at 8MHz
     CCP1CON = 0x0C;     // PWM mode and no decimal value for PWM 
     CCP2CON = 0x0C;
-    PR2 = 124 ;         // Open @1kHz 
+    PR2 = 200 ;         // Open @625 Hz 
     CCPR1L = 110;        // 50% duty cycle Motorb 1
     CCPR1H = 0;
     CCPR2L = 110;        // 50% duty cycle Motorb 2
@@ -95,97 +98,18 @@ void stop(){
     M2BCK = 1;
 }
 
-void evade(){
-    // sequence
-}
-
-void read_values(int s){
-    for(int z = 0; z < s; z++){
+void read_values(){
+    for(int z = 0; z < 8; z++){
         convertAtoD(z);
         while(ADCON0bits.GO);
-        value[z] = (ADRESH<<8)+ADRESL;
+        qtr[z] = (ADRESH<<8)+ADRESL;
     }
+    
+    convertAtoD(8);
+    while(ADCON0bits.GO);
+    sharp = (ADRESH<<8)+ADRESL;
+    distance = 13/(sharp * 0.004853515);
 }
-/*
-void follow_line(){ 
-    read_values(9);
-    //SHARP
-    if (value[8] > SHARP_C){
-        evade();
-    } else {
-    //QTR
-        for (int i=0; i > 8; i++){
-            if(value[i] < qtr_thresh[i]){
-                bit_clear(qtr, i);
-            } else {
-                bit_set(qtr, i);
-            }
-        }
-        switch(qtr){
-            case 0b10000000:
-                CCPR1L = PR2 * 0.50;
-                CCPR2L = PR2 * 0.9;
-                break;
-            case 0b11000000:
-                CCPR1L = PR2 * 0.60;
-                CCPR2L = PR2 * 0.9;
-                break;
-            case 0b01000000:
-                CCPR1L = PR2 * 0.65;
-                CCPR2L = PR2 * 0.9;
-                break;
-            case 0b01100000:
-                CCPR1L = PR2 * 0.70;
-                CCPR2L = PR2 * 0.9;
-                break;
-            case 0b00100000:
-                CCPR1L = PR2 * 0.75;
-                CCPR2L = PR2 * 0.9;
-                break;
-            case 0b00110000:
-                CCPR1L = PR2 * 0.80;
-                CCPR2L = PR2 * 0.9;
-                break;
-            case 0b00010000:
-                CCPR1L = PR2 * 0.85;
-                CCPR2L = PR2 * 0.9;
-                break;
-            case 0b00011000:
-                CCPR1L = PR2 * 0.9;
-                CCPR2L = PR2 * 0.9;
-                break;
-            case 0b00001000:
-                CCPR1L = PR2 * 0.9;
-                CCPR2L = PR2 * 0.85;
-                break;
-            case 0b00001100:
-                CCPR1L = PR2 * 0.9;
-                CCPR2L = PR2 * 0.80;
-                break;
-            case 0b00000100:
-                CCPR1L = PR2 * 0.9;
-                CCPR2L = PR2 * 0.75;
-                break;
-            case 0b00000110:
-                CCPR1L = PR2 * 0.9;
-                CCPR2L = PR2 * 0.70;
-                break;
-            case 0b00000010:
-                CCPR1L = PR2 * 0.9;
-                CCPR2L = PR2 * 0.65;
-                break;
-            case 0b00000011:
-                CCPR1L = PR2 * 0.9;
-                CCPR2L = PR2 * 0.60;
-                break;
-            case 0b00000001:
-                CCPR1L = PR2 * 0.9;
-                CCPR2L = PR2 * 0.50;
-                break;
-        }
-    }
-}
-*/
 
 void calibrate(){
     LED = _ON;
@@ -197,13 +121,13 @@ void calibrate(){
         read_values(8);
         for(int j = 0; j < 8; j++){
             // Set Max values for each sensor
-            if (value[j] > qtr_max[j]){
-                qtr_max[j] = value[j];
+            if (qtr[j] > qtr_max[j]){
+                qtr_max[j] = qtr[j];
             }
             
             // Set Min values for each sensor
-            if (value[j] < qtr_min[j]){
-                qtr_min[j] = value[j];
+            if (qtr[j] < qtr_min[j]){
+                qtr_min[j] = qtr[j];
             }
         }
     }
@@ -213,17 +137,87 @@ void calibrate(){
     }
 }
 
+void set_duty(unsigned int m1, unsigned int m2){
+    CCPR1L = (PR2 * m1) / 100;
+    CCPR2L = (PR2 * m2) / 100;
+}
+
+void evade(){   
+    // MOVE TO RIGHT
+    set_duty(45,10);
+    __delay_ms(1200);
+    set_duty(10,45);
+    __delay_ms(1200);
+
+    // MOVE TO LEFT
+    /*
+     * set_duty(10,45);
+     * __delay_ms(1000);
+     * set_duty(45,10);
+     */
+}
+
 void follow_line(){
-    read_values(9);
-    if(value[0] > qtr_thresh[0]){
-        CCPR1L = 1;
-        CCPR2L = 62;
-    } else if (value[7] > qtr_thresh[0]){
-        CCPR1L = 62;
-        CCPR2L = 1;
-    } else {
-        CCPR1L = 62;
-        CCPR2L = 62;
+//    === HOME ===
+//    if(qtr[0] > qtr_thresh[0]){           // 1000 0000
+//        set_duty(05,45);
+//    } else if (qtr[1] > qtr_thresh[1]){   // X100 0000
+//        set_duty(10,45);
+//    } else if (qtr[2] > qtr_thresh[2]){   // XX10 0000
+//        set_duty(15,45);
+//    } else if ((qtr[3] > qtr_thresh[3]) && (qtr[4] < qtr_thresh[4])){   // XXX1 0000
+//        set_duty(20,45);
+//    } else if (qtr[7] > qtr_thresh[7]){   // 0000 0001
+//        set_duty(45,05);
+//    } else if (qtr[6] > qtr_thresh[6]){   // 0000 001X
+//        set_duty(45, 10);
+//    } else if (qtr[5] > qtr_thresh[5]){   // 0000 01XX
+//        set_duty(45, 15);
+//    } else if (qtr[4] > qtr_thresh[4] && (qtr[3] < qtr_thresh[3])){   // 0000 1XXX
+//        set_duty(45, 20);
+//    } else {
+//        set_duty(40,40);
+//    }
+    // === OVAL CIRCUIT ===
+//    if(qtr[0] > qtr_thresh[0]){                                         // 1000 0000
+//        set_duty(01,40);
+//    } else if (qtr[1] > qtr_thresh[1]){                                 // X100 0000
+//        set_duty(05,35);
+//    } else if (qtr[2] > qtr_thresh[2]){                                 // XX10 0000
+//        set_duty(10,35);
+//    } else if ((qtr[3] > qtr_thresh[3]) && (qtr[4] < qtr_thresh[4])){   // XXX1 0000
+//        set_duty(15,35);
+//    } else if (qtr[7] > qtr_thresh[7]){                                 // 0000 0001
+//        set_duty(40,01);
+//    } else if (qtr[6] > qtr_thresh[6]){                                 // 0000 001X
+//        set_duty(35, 05);
+//    } else if (qtr[5] > qtr_thresh[5]){                                 // 0000 01XX
+//        set_duty(35, 10);
+//    } else if (qtr[4] > qtr_thresh[4] && (qtr[3] < qtr_thresh[3])){     // 0000 1XXX
+//        set_duty(35, 15);
+//    } else {                                                            // 0001 1000
+//        set_duty(35,35);
+//    }
+    
+    // === FINAL CIRCUIT ===
+    if(qtr[0] > qtr_thresh[0]){                                         // 1000 0000
+        set_duty(03,40);
+    } else if (qtr[1] > qtr_thresh[1]){                                 // X100 0000
+        set_duty(05,35);
+    } else if (qtr[2] > qtr_thresh[2]){                                 // XX10 0000
+        set_duty(10,35);
+    } else if ((qtr[3] > qtr_thresh[3]) && (qtr[4] < qtr_thresh[4])){   // XXX1 0000
+        set_duty(15,35);
+    } else if (qtr[7] > qtr_thresh[7]){                                 // 0000 0001
+        set_duty(40,03);
+    } else if (qtr[6] > qtr_thresh[6]){                                 // 0000 001X
+        set_duty(35,05);
+    } else if (qtr[5] > qtr_thresh[5]){                                 // 0000 01XX
+        set_duty(35,10);
+    } else if (qtr[4] > qtr_thresh[4] && (qtr[3] < qtr_thresh[3])){     // 0000 1XXX
+        set_duty(35,15);
+    } else if((qtr[3] > qtr_thresh[3]) && (qtr[4] > qtr_thresh[4])){    // 0001 1000                                                            // 0001 1000
+        set_duty(40,40);
     }
 }
 
@@ -235,23 +229,15 @@ void main(void) {
     calibrate();
     flicker();
     goFWD();
-    
+
     while(1){
-//        if(ignite){
-//            __delay_ms(100);
-//            goFWD();
-//            __delay_ms(500);
-//            stop();
-//            __delay_ms(500);
-//            goBACK();
-//            __delay_ms(500);
-//            stop();
-//            ignite = 0;
-//        } else {
-//            stop();
-//        }
-        
+        read_values();
         follow_line();
+//        if(distance > 17){
+//            follow_line();
+//        } else {
+//            evade();
+//        }
     }
     return;
 }

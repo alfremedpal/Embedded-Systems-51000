@@ -52,8 +52,8 @@
 #define TRISQ8 TRISEbits.TRISE2 // A3
 
 //===GP2Y0A41SK0F===
-#define SHARP PORTBbits.RB0 // B0
-#define TRIS_S TRISBbits.RB0
+#define SHARP PORTBbits.RB2 // B0
+#define TRIS_S TRISBbits.RB2
 #define SHARP_C 512
 
 ///===MOTOR===
