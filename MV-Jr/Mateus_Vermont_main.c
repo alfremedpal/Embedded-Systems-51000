@@ -108,10 +108,11 @@ void read_values(){
     convertAtoD(8);
     while(ADCON0bits.GO);
     sharp = (ADRESH<<8)+ADRESL;
-    distance = 13/(sharp * 0.004853515);
+    //distance = 13/(sharp * 0.004853515);
 }
 
 void calibrate(){
+    flicker();
     LED = _ON;
     for(int l = 0; l < 8; l++){
         qtr_max[l] = 0;
@@ -135,6 +136,7 @@ void calibrate(){
     for(int k = 0; k < 8; k++){
         qtr_thresh[k] = (qtr_min[k] + qtr_max[k])/2;
     }
+    flicker();
 }
 
 void set_duty(unsigned int m1, unsigned int m2){
@@ -142,19 +144,23 @@ void set_duty(unsigned int m1, unsigned int m2){
     CCPR2L = (PR2 * m2) / 100;
 }
 
-void evade(){   
+void evade_right(){   
     // MOVE TO RIGHT
-    set_duty(45,10);
-    __delay_ms(1200);
-    set_duty(10,45);
-    __delay_ms(1200);
+    set_duty(40,03);
+    __delay_ms(1500);
+    set_duty(03,40);
+    __delay_ms(800);
+    set_duty(35,35);
+    __delay_ms(800);
+    set_duty(03,40);
+    __delay_ms(500);
+    set_duty(35,35);
+}
 
-    // MOVE TO LEFT
-    /*
-     * set_duty(10,45);
-     * __delay_ms(1000);
-     * set_duty(45,10);
-     */
+void evade_left(){
+    set_duty(10,45);
+    __delay_ms(1000);
+    set_duty(45,10);
 }
 
 void follow_line(){
@@ -201,7 +207,7 @@ void follow_line(){
     
     // === FINAL CIRCUIT ===
     if(qtr[0] > qtr_thresh[0]){                                         // 1000 0000
-        set_duty(03,40);
+        set_duty(05,50);
     } else if (qtr[1] > qtr_thresh[1]){                                 // X100 0000
         set_duty(05,35);
     } else if (qtr[2] > qtr_thresh[2]){                                 // XX10 0000
@@ -209,7 +215,7 @@ void follow_line(){
     } else if ((qtr[3] > qtr_thresh[3]) && (qtr[4] < qtr_thresh[4])){   // XXX1 0000
         set_duty(15,35);
     } else if (qtr[7] > qtr_thresh[7]){                                 // 0000 0001
-        set_duty(40,03);
+        set_duty(50,05);
     } else if (qtr[6] > qtr_thresh[6]){                                 // 0000 001X
         set_duty(35,05);
     } else if (qtr[5] > qtr_thresh[5]){                                 // 0000 01XX
@@ -217,7 +223,7 @@ void follow_line(){
     } else if (qtr[4] > qtr_thresh[4] && (qtr[3] < qtr_thresh[3])){     // 0000 1XXX
         set_duty(35,15);
     } else if((qtr[3] > qtr_thresh[3]) && (qtr[4] > qtr_thresh[4])){    // 0001 1000                                                            // 0001 1000
-        set_duty(40,40);
+        set_duty(50,50);
     }
 }
 
@@ -225,18 +231,18 @@ void main(void) {
     configPIC();   
     stop();
     warm_up();
-    flicker();
     calibrate();
-    flicker();
     goFWD();
-
+    sharp = 0;
     while(1){
         read_values();
-        follow_line();
-//        if(distance > 17){
-//            follow_line();
+         follow_line();
+        
+        //     CAR ___d___ WALL ____ if d < 17, then i should evade, else i should follow the line
+//        if(sharp > 200){
+//            evade_right();
 //        } else {
-//            evade();
+//            follow_line();
 //        }
     }
     return;
