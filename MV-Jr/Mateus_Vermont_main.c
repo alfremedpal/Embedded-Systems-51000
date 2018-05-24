@@ -108,7 +108,6 @@ void read_values(){
     convertAtoD(8);
     while(ADCON0bits.GO);
     sharp = (ADRESH<<8)+ADRESL;
-    //distance = 13/(sharp * 0.004853515);
 }
 
 void calibrate(){
@@ -145,25 +144,49 @@ void set_duty(unsigned int m1, unsigned int m2){
 }
 
 void evade_right(){   
-    // MOVE TO RIGHT
-    set_duty(40,03);
-    __delay_ms(1500);
-    set_duty(03,40);
-    __delay_ms(800);
-    set_duty(35,35);
-    __delay_ms(800);
-    set_duty(03,40);
+    stop();
+    __delay_ms(100);
+    set_duty(50,50);
+    goBACK();
     __delay_ms(500);
-    set_duty(35,35);
+    goFWD();
+    set_duty(40,03);
+    __delay_ms(500);
+    set_duty(40,40);
+    __delay_ms(300);
+    set_duty(03,40);
+    __delay_ms(600);
+    set_duty(40,40);
+    __delay_ms(300);
+    set_duty(20,40);
 }
 
 void evade_left(){
-    set_duty(10,45);
-    __delay_ms(1000);
-    set_duty(45,10);
+    stop();
+    __delay_ms(100);
+    set_duty(50,50);
+    goBACK();
+    __delay_ms(500);
+    goFWD();
+    set_duty(03,40);
+    __delay_ms(500);
+    set_duty(40,40);
+    __delay_ms(300);
+    set_duty(40,03);
+    __delay_ms(600);
+    set_duty(40,40);
+    __delay_ms(300);
+    set_duty(40,20);
+    
+//    stop();
+//    __delay_ms(500);
+//    goBACK();
+//    __delay_ms(500);
+//    stop();
 }
 
 void follow_line(){
+    goFWD();
 //    === HOME ===
 //    if(qtr[0] > qtr_thresh[0]){           // 1000 0000
 //        set_duty(05,45);
@@ -207,23 +230,23 @@ void follow_line(){
     
     // === FINAL CIRCUIT ===
     if(qtr[0] > qtr_thresh[0]){                                         // 1000 0000
-        set_duty(05,50);
-    } else if (qtr[1] > qtr_thresh[1]){                                 // X100 0000
         set_duty(05,35);
+    } else if (qtr[1] > qtr_thresh[1]){                                 // X100 0000
+        set_duty(10,40);
     } else if (qtr[2] > qtr_thresh[2]){                                 // XX10 0000
-        set_duty(10,35);
+        set_duty(15,40);
     } else if ((qtr[3] > qtr_thresh[3]) && (qtr[4] < qtr_thresh[4])){   // XXX1 0000
-        set_duty(15,35);
+        set_duty(20,40);
     } else if (qtr[7] > qtr_thresh[7]){                                 // 0000 0001
-        set_duty(50,05);
-    } else if (qtr[6] > qtr_thresh[6]){                                 // 0000 001X
         set_duty(35,05);
+    } else if (qtr[6] > qtr_thresh[6]){                                 // 0000 001X
+        set_duty(40,10);
     } else if (qtr[5] > qtr_thresh[5]){                                 // 0000 01XX
-        set_duty(35,10);
+        set_duty(40,15);
     } else if (qtr[4] > qtr_thresh[4] && (qtr[3] < qtr_thresh[3])){     // 0000 1XXX
-        set_duty(35,15);
+        set_duty(40,20);
     } else if((qtr[3] > qtr_thresh[3]) && (qtr[4] > qtr_thresh[4])){    // 0001 1000                                                            // 0001 1000
-        set_duty(50,50);
+        set_duty(40,40);
     }
 }
 
@@ -236,14 +259,44 @@ void main(void) {
     sharp = 0;
     while(1){
         read_values();
-         follow_line();
+        //follow_line();
         
-        //     CAR ___d___ WALL ____ if d < 17, then i should evade, else i should follow the line
-//        if(sharp > 200){
-//            evade_right();
-//        } else {
-//            follow_line();
-//        }
+        // CAR ___d___ WALL ____ if d < 17, then i should evade, else i should follow the line
+        if(sharp > 300){
+            // Evading to the right;
+//            stop();
+//            __delay_ms(100);
+//            set_duty(50,50);
+//            goBACK();
+//            __delay_ms(500);
+//            goFWD();
+//            set_duty(40,03);
+//            __delay_ms(500);
+//            set_duty(40,40);
+//            __delay_ms(500);
+//            set_duty(03,40);
+//            __delay_ms(600);
+//            set_duty(40,40);
+//            __delay_ms(300);
+//            set_duty(20,40);
+            stop();
+    __delay_ms(100);
+    set_duty(50,50);
+    goBACK();
+    __delay_ms(500);
+    goFWD();
+    set_duty(03,40);
+    __delay_ms(500);
+    set_duty(40,40);
+    __delay_ms(300);
+    set_duty(40,03);
+    __delay_ms(600);
+    set_duty(40,40);
+    __delay_ms(300);
+    set_duty(40,20);
+        } else {
+            follow_line();
+        }
     }
     return;
 }
