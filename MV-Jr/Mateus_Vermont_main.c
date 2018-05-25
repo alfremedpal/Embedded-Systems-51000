@@ -21,6 +21,8 @@ int qtr_thresh[8];
 int sharp;
 double distance;
 
+char command;
+
 void alternate_LED(){
     if (LED){
         LED = _OFF;
@@ -38,6 +40,7 @@ void flicker(){
 
 void warm_up(){
     ignite = 1;
+    command = 'a';
     
     LED = _OFF;
            
@@ -64,6 +67,7 @@ void warm_up(){
     TRISCbits.RC1 = 1;  // CCP2 as input - OFF
     
     initADC();
+    initUSART(38400);
 }
 
 void goBACK(){
@@ -89,6 +93,22 @@ void goFWD(){
     
     TRISCbits.RC2 = 0;  // CCP1 ON            
     TRISCbits.RC1 = 0;  // CCP2 ON
+}
+
+void pivot_L(){
+    M1FWD = 1;
+    M1BCK = 0;
+    
+    M2FWD = 0;
+    M2BCK = 1;
+}
+
+void pivot_R(){
+    M1FWD = 0; 
+    M1BCK = 1;
+    
+    M2FWD = 1;
+    M2BCK = 0;
 }
 
 void stop(){
@@ -185,6 +205,26 @@ void evade_left(){
 //    stop();
 }
 
+void test(){
+            set_duty(60,60);
+            goFWD();
+            __delay_ms(1000);
+            stop();
+            __delay_ms(300);
+            pivot_L();
+            __delay_ms(1000);
+            stop();
+            __delay_ms(300);
+            pivot_R();
+            __delay_ms(1000);
+            stop();
+            __delay_ms(300);
+            goBACK();
+            __delay_ms(1000);
+            stop();
+            while(1);
+        }
+
 void follow_line(){
     goFWD();
 //    === HOME ===
@@ -250,53 +290,77 @@ void follow_line(){
     }
 }
 
+void follow_command(){
+    if(command == 1){
+        set_duty(60,60);
+        goFWD();
+    } else if (command == 2){
+        set_duty(50,50);
+        goBACK();
+    } else if (command == 3){
+        set_duty(50,50);
+        pivot_R();
+    } else if (command == 4){
+        set_duty(50,50);
+        pivot_L();
+    } else {
+        stop();
+    }
+}
+
+void interrupt isr(){
+    if(RCIF){
+        if(RCSTAbits.OERR){           
+            CREN = 0;
+            NOP();
+            CREN=1;
+        }
+        command = RCREG;
+    }
+}
+
 void main(void) {
     configPIC();   
     stop();
     warm_up();
-    calibrate();
-    goFWD();
+//    test();
+//    calibrate();
+//    goFWD();
     sharp = 0;
+    
     while(1){
-        read_values();
-        //follow_line();
-        
-        // CAR ___d___ WALL ____ if d < 17, then i should evade, else i should follow the line
-        if(sharp > 300){
-            // Evading to the right;
+        // LINE FOLLOWER
+//        read_values();
+//        //follow_line();
+//        
+//        // CAR ___d___ WALL ____ if d < 17, then i should evade, else i should follow the line
+//        if(sharp > 300){
 //            stop();
 //            __delay_ms(100);
 //            set_duty(50,50);
 //            goBACK();
 //            __delay_ms(500);
 //            goFWD();
-//            set_duty(40,03);
+//            set_duty(03,40);
 //            __delay_ms(500);
 //            set_duty(40,40);
-//            __delay_ms(500);
-//            set_duty(03,40);
+//            __delay_ms(300);
+//            set_duty(40,03);
 //            __delay_ms(600);
 //            set_duty(40,40);
 //            __delay_ms(300);
-//            set_duty(20,40);
-            stop();
-    __delay_ms(100);
-    set_duty(50,50);
-    goBACK();
-    __delay_ms(500);
-    goFWD();
-    set_duty(03,40);
-    __delay_ms(500);
-    set_duty(40,40);
-    __delay_ms(300);
-    set_duty(40,03);
-    __delay_ms(600);
-    set_duty(40,40);
-    __delay_ms(300);
-    set_duty(40,20);
-        } else {
-            follow_line();
-        }
+//            set_duty(40,20);
+//        } else {
+//            follow_line();
+//        }
+        
+        // GLOVET
+        RCIF = 0;
+        
+        while(RCIF == 0);
+        
+        
+        follow_command();
     }
     return;
 }

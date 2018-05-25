@@ -1,6 +1,33 @@
 #include "config.h"
 #include "globalDefinitions.h"
 
+void initUSART(long baudRate){
+    TRISCbits.RC6 = OUTPUT;
+    TRISCbits.RC7 = INPUT;
+    
+     /* Baud rate = 38400, SPBRG = (F_CPU /(64*38400))-1*/ 
+    SPBRG = (( (float) (F_CPU) / (float) baudRate ) - 1);    
+    
+    TXSTA=0x20;                     
+    RCSTA=0x90;  
+}
+
+char transmitUSART(char out){
+   while (TXIF == 0);	/* Wait for transmit interrupt flag*/
+   TXREG = out;         /* Write char data to transmit register */   
+}
+
+char recieveUSART(){
+    while(RCIF == 0); /*wait for receive interrupt flag*/
+    if(RCSTAbits.OERR)
+    {           
+        CREN = 0;
+        NOP();
+        CREN=1;
+    }
+    return(RCREG);  /*received in RCREG register and return to main program */
+}
+
 void openPWM1(unsigned int period)
 {
     PR2 = period;        /* load period value */
@@ -58,8 +85,11 @@ void configPIC()
     
    // Interrupts
     
-    INTCONbits.GIE = 0;         // Turn OFF ALL interrupts
+    INTCONbits.GIE = 1;         // Turn OFF ALL interrupts
     INTCONbits.PEIE_GIEL = 1;   // Turn on peripheral interrupts
+    
+    PIE1bits.RCIE = 1;
+    PIR1bits.RCIF = 0;
     
     INTCONbits.INT0IE = 1;      // Enables interrupts from INT0
     INTCONbits.INT0IF = 0;      // INT0 flag is off

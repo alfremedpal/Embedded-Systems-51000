@@ -5,6 +5,7 @@
 //PARTICULR: Unique to this application
 
 #define _XTAL_FREQ 8000000
+#define F_CPU 8000000/64
 
 //===BASIC===
 #define _ON 1
@@ -59,18 +60,23 @@
 ///===MOTOR===
     // YELLOW MOTORB
     #define M1FWD PORTDbits.RD0
-    #define M1BCK PORTCbits.RC6
+    #define M1BCK PORTDbits.RD3
 
     #define M1F_TRIS TRISDbits.RD0
-    #define M1B_TRIS TRISCbits.RC6
+    #define M1B_TRIS TRISDbits.RD3
 
 
     // BLUE MOTORB
-    #define M2FWD PORTCbits.RC7
+    #define M2FWD PORTDbits.RD2
     #define M2BCK PORTDbits.RD1
 
-    #define M2F_TRIS TRISCbits.RC7
+    #define M2F_TRIS TRISDbits.RD2
     #define M2B_TRIS TRISDbits.RD1
 
-
+// === GLOVET ===
+#define STOP 's'
+#define FORWARD 'f'
+#define BACK 'b'
+#define RIGHT 'r'
+#define LEFT 'l'
 #endif	/* GLOBALDEFINITIONS_H */
